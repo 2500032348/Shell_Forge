@@ -1,26 +1,24 @@
 CC = gcc
 
-CFLAGS = -Wall -Wextra -Iinclude
+CFLAGS = -Wall -Wextra -Iinclude -g
 
 TARGET = shellforge
 
-SRC = src/main.c src/lexer.c src/token.c
+SRC = src/main.c \
+      src/parser.c \
+      src/expand.c
 
-OBJ = src/main.o src/lexer.o src/token.o
+OBJ = $(SRC:.c=.o)
 
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
-	$(CC) $(OBJ) -o $(TARGET)
+	$(CC) $(CFLAGS) $(OBJ) -o $(TARGET)
 
-src/main.o: src/main.c include/lexer.h include/token.h
-	$(CC) $(CFLAGS) -c src/main.c -o src/main.o
-
-src/lexer.o: src/lexer.c include/lexer.h include/token.h
-	$(CC) $(CFLAGS) -c src/lexer.c -o src/lexer.o
-
-src/token.o: src/token.c include/token.h
-	$(CC) $(CFLAGS) -c src/token.c -o src/token.o
+src/%.o: src/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJ) $(TARGET)
+
+.PHONY: all clean
