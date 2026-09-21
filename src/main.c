@@ -11,6 +11,12 @@ int main(void)
 {
     char input[MAX_INPUT_LENGTH];
 
+    /*
+     * Setup SIGCHLD handler
+     * for background processes.
+     */
+    setup_background_handler();
+
     while (1)
     {
         printf("shellforge$ ");

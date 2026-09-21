@@ -1,0 +1,15 @@
+total 132
+drwxr-xr-x 2 humera humera  4096 Jul 29 10:51 docs
+drwxr-xr-x 2 humera humera  4096 Sep 21 11:34 include
+-rwxr-xr-x 1 humera humera 16272 Sep 12 04:40 major_fault
+-rw-r--r-- 1 humera humera   719 Sep 12 04:40 major_fault.c
+-rw-r--r-- 1 humera humera   413 Aug 29 05:22 makefile
+-rwxr-xr-x 1 humera humera 16216 Sep 12 04:42 minor_fault
+-rw-r--r-- 1 humera humera   593 Sep 12 04:42 minor_fault.c
+-rw-r--r-- 1 humera humera     0 Sep 21 11:36 output.txt
+-rw-r--r-- 1 humera humera     6 Sep 12 04:42 page.txt
+-rwxr-xr-x 1 humera humera 16104 Sep 12 04:37 paging
+-rw-r--r-- 1 humera humera  1904 Sep 12 04:37 paging.c
+-rwxr-xr-x 1 humera humera 45496 Sep 21 11:36 shellforge
+drwxr-xr-x 2 humera humera  4096 Sep 21 11:36 src
+drwxr-xr-x 2 humera humera  4096 Jul 29 10:51 tests
