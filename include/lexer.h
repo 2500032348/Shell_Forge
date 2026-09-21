@@ -4,7 +4,7 @@
 #include "token.h"
 
 #define MAX_INPUT_LENGTH 1024
-#define MAX_TOKENS 100
+#define MAX_TOKENS 128
 
 int tokenize(const char *input, Token tokens[]);
 

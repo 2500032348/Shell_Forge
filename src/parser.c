@@ -1,160 +1,21 @@
 #include <stdio.h>
-#include <string.h>
-#include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "parser.h"
-
-static void add_token(Token tokens[], int *count,
-                      TokenType type, const char *value)
-{
-    if (*count >= MAX_TOKENS - 1)
-        return;
-
-    tokens[*count].type = type;
-
-    if (value != NULL)
-        strncpy(tokens[*count].value, value, MAX_TOKEN_LEN - 1);
-    else
-        tokens[*count].value[0] = '\0';
-
-    tokens[*count].value[MAX_TOKEN_LEN - 1] = '\0';
-
-    (*count)++;
-}
-
-int tokenize(const char *line, Token tokens[])
-{
-    int count = 0;
-    int i = 0;
-
-    while (line[i] != '\0' && line[i] != '\n') {
-
-        /* Skip spaces */
-        if (isspace((unsigned char)line[i])) {
-            i++;
-            continue;
-        }
-
-        /* Pipe */
-        if (line[i] == '|') {
-            add_token(tokens, &count, TOKEN_PIPE, "|");
-            i++;
-            continue;
-        }
-
-        /* Input redirection */
-        if (line[i] == '<') {
-            add_token(tokens, &count, TOKEN_INPUT, "<");
-            i++;
-            continue;
-        }
-
-        /* Output / append redirection */
-        if (line[i] == '>') {
-
-            if (line[i + 1] == '>') {
-                add_token(tokens, &count, TOKEN_APPEND, ">>");
-                i += 2;
-            } else {
-                add_token(tokens, &count, TOKEN_OUTPUT, ">");
-                i++;
-            }
-
-            continue;
-        }
-
-        /* Background */
-        if (line[i] == '&') {
-            add_token(tokens, &count, TOKEN_BACKGROUND, "&");
-            i++;
-            continue;
-        }
-
-        /* Word */
-        char word[MAX_TOKEN_LEN];
-        int j = 0;
-
-        while (line[i] != '\0' &&
-               line[i] != '\n' &&
-               !isspace((unsigned char)line[i]) &&
-               line[i] != '|' &&
-               line[i] != '<' &&
-               line[i] != '>' &&
-               line[i] != '&') {
-
-            if (j < MAX_TOKEN_LEN - 1) {
-                word[j++] = line[i];
-            }
-
-            i++;
-        }
-
-        word[j] = '\0';
-
-        if (j > 0) {
-            add_token(tokens, &count, TOKEN_WORD, word);
-        }
-    }
-
-    add_token(tokens, &count, TOKEN_END, "END");
-
-    return count;
-}
-
-static const char *token_name(TokenType type)
-{
-    switch (type) {
-        case TOKEN_WORD:
-            return "WORD";
-
-        case TOKEN_PIPE:
-            return "PIPE";
-
-        case TOKEN_INPUT:
-            return "INPUT";
-
-        case TOKEN_OUTPUT:
-            return "OUTPUT";
-
-        case TOKEN_APPEND:
-            return "APPEND";
-
-        case TOKEN_BACKGROUND:
-            return "BACKGROUND";
-
-        case TOKEN_END:
-            return "END";
-
-        default:
-            return "UNKNOWN";
-    }
-}
-
-void print_tokens(Token tokens[], int count)
-{
-    printf("\n------------ TOKENS ------------\n");
-
-    for (int i = 0; i < count; i++) {
-        printf("%2d : %-12s %s\n",
-               i,
-               token_name(tokens[i].type),
-               tokens[i].value);
-    }
-
-    printf("--------------------------------\n");
-}
 
 int parse_pipeline(Token tokens[], int token_count, Pipeline *pipeline)
 {
     memset(pipeline, 0, sizeof(Pipeline));
 
-    pipeline->command_count = 1;
-
     int cmd = 0;
     int argc = 0;
 
-    for (int i = 0; i < MAX_COMMANDS; i++) {
+    pipeline->command_count = 1;
+
+    for (int i = 0; i < MAX_COMMANDS; i++)
+    {
+        pipeline->commands[i].argc = 0;
         pipeline->commands[i].argv[0] = NULL;
         pipeline->commands[i].input = NULL;
         pipeline->commands[i].output = NULL;
@@ -162,24 +23,26 @@ int parse_pipeline(Token tokens[], int token_count, Pipeline *pipeline)
         pipeline->commands[i].background = 0;
     }
 
-    for (int i = 0; i < token_count; i++) {
-
+    for (int i = 0; i < token_count; i++)
+    {
         Token *token = &tokens[i];
 
-        if (token->type == TOKEN_END) {
+        if (token->type == TOKEN_END)
+        {
             break;
         }
 
-        /* Normal argument */
-        if (token->type == TOKEN_WORD) {
-
-            if (argc < MAX_ARGS - 1) {
-
+        /* Normal command/argument */
+        if (token->type == TOKEN_WORD)
+        {
+            if (argc < MAX_ARGS - 1)
+            {
                 pipeline->commands[cmd].argv[argc] =
                     strdup(token->value);
 
                 argc++;
 
+                pipeline->commands[cmd].argc = argc;
                 pipeline->commands[cmd].argv[argc] = NULL;
             }
 
@@ -187,9 +50,16 @@ int parse_pipeline(Token tokens[], int token_count, Pipeline *pipeline)
         }
 
         /* Pipe */
-        if (token->type == TOKEN_PIPE) {
+        if (token->type == TOKEN_PIPE)
+        {
+            if (argc == 0)
+            {
+                fprintf(stderr, "Shellforge: invalid pipe\n");
+                return 0;
+            }
 
-            if (cmd < MAX_COMMANDS - 1) {
+            if (cmd < MAX_COMMANDS - 1)
+            {
                 cmd++;
                 pipeline->command_count++;
                 argc = 0;
@@ -199,64 +69,88 @@ int parse_pipeline(Token tokens[], int token_count, Pipeline *pipeline)
         }
 
         /* Input redirection */
-        if (token->type == TOKEN_INPUT) {
-
+        if (token->type == TOKEN_INPUT)
+        {
             if (i + 1 < token_count &&
-                tokens[i + 1].type == TOKEN_WORD) {
-
+                tokens[i + 1].type == TOKEN_WORD)
+            {
                 pipeline->commands[cmd].input =
                     strdup(tokens[++i].value);
+            }
+            else
+            {
+                fprintf(stderr,
+                        "Shellforge: expected filename after <\n");
+                return 0;
             }
 
             continue;
         }
 
         /* Output redirection */
-        if (token->type == TOKEN_OUTPUT) {
-
+        if (token->type == TOKEN_OUTPUT)
+        {
             if (i + 1 < token_count &&
-                tokens[i + 1].type == TOKEN_WORD) {
-
+                tokens[i + 1].type == TOKEN_WORD)
+            {
                 pipeline->commands[cmd].output =
                     strdup(tokens[++i].value);
 
                 pipeline->commands[cmd].append = 0;
+            }
+            else
+            {
+                fprintf(stderr,
+                        "Shellforge: expected filename after >\n");
+                return 0;
             }
 
             continue;
         }
 
         /* Append redirection */
-        if (token->type == TOKEN_APPEND) {
-
+        if (token->type == TOKEN_APPEND)
+        {
             if (i + 1 < token_count &&
-                tokens[i + 1].type == TOKEN_WORD) {
-
+                tokens[i + 1].type == TOKEN_WORD)
+            {
                 pipeline->commands[cmd].output =
                     strdup(tokens[++i].value);
 
                 pipeline->commands[cmd].append = 1;
+            }
+            else
+            {
+                fprintf(stderr,
+                        "Shellforge: expected filename after >>\n");
+                return 0;
             }
 
             continue;
         }
 
         /* Background */
-        if (token->type == TOKEN_BACKGROUND) {
+        if (token->type == TOKEN_BACKGROUND)
+        {
             pipeline->commands[cmd].background = 1;
             continue;
         }
     }
 
-    return 0;
+    if (pipeline->commands[cmd].argc == 0)
+    {
+        pipeline->command_count--;
+    }
+
+    return 1;
 }
 
 void print_pipeline(Pipeline *pipeline)
 {
     printf("\n========== PIPELINE ==========\n");
 
-    for (int i = 0; i < pipeline->command_count; i++) {
-
+    for (int i = 0; i < pipeline->command_count; i++)
+    {
         Command *cmd = &pipeline->commands[i];
 
         printf("\nCommand %d\n", i + 1);
@@ -264,7 +158,8 @@ void print_pipeline(Pipeline *pipeline)
 
         printf("Arguments\n");
 
-        for (int j = 0; cmd->argv[j] != NULL; j++) {
+        for (int j = 0; j < cmd->argc; j++)
+        {
             printf("argv[%d] = %s\n", j, cmd->argv[j]);
         }
 
@@ -286,21 +181,26 @@ void print_pipeline(Pipeline *pipeline)
 
 void free_pipeline(Pipeline *pipeline)
 {
-    for (int i = 0; i < pipeline->command_count; i++) {
-
+    for (int i = 0; i < pipeline->command_count; i++)
+    {
         Command *cmd = &pipeline->commands[i];
 
-        for (int j = 0; cmd->argv[j] != NULL; j++) {
+        for (int j = 0; j < cmd->argc; j++)
+        {
             free(cmd->argv[j]);
             cmd->argv[j] = NULL;
         }
 
-        if (cmd->input != NULL) {
+        cmd->argc = 0;
+
+        if (cmd->input != NULL)
+        {
             free(cmd->input);
             cmd->input = NULL;
         }
 
-        if (cmd->output != NULL) {
+        if (cmd->output != NULL)
+        {
             free(cmd->output);
             cmd->output = NULL;
         }

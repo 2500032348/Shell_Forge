@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS = -Wall -Wextra -Iinclude -g
+CFLAGS = -Wall -Wextra -Iinclude
 
 TARGET = shellforge
 
@@ -9,6 +9,7 @@ SRC = src/main.c \
       src/lexer.c \
       src/parser.c \
       src/expand.c \
+      src/history.c \
       src/builtin.c \
       src/executor.c
 
@@ -17,12 +18,12 @@ OBJ = $(SRC:.c=.o)
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -o $(TARGET) -lreadline
+        $(CC) $(OBJ) -o $(TARGET) -lreadline
 
 src/%.o: src/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+        $(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ) $(TARGET)
+        rm -f $(OBJ) $(TARGET)
 
 .PHONY: all clean

@@ -1,27 +1,24 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
-#define MAX_TOKEN_LENGTH 100
+#define MAX_TOKEN_LEN 256
+#define MAX_TOKENS 128
 
-typedef enum {
+typedef enum
+{
     TOKEN_WORD,
-    TOKEN_NUMBER,
-    TOKEN_STRING,
-    TOKEN_OPERATOR,
     TOKEN_PIPE,
-    TOKEN_REDIRECT_IN,
-    TOKEN_REDIRECT_OUT,
-    TOKEN_REDIRECT_APPEND,
-    TOKEN_SEMICOLON,
-    TOKEN_EOF,
-    TOKEN_UNKNOWN
+    TOKEN_INPUT,
+    TOKEN_OUTPUT,
+    TOKEN_APPEND,
+    TOKEN_BACKGROUND,
+    TOKEN_END
 } TokenType;
 
-typedef struct {
+typedef struct
+{
     TokenType type;
-    char value[MAX_TOKEN_LENGTH];
+    char value[MAX_TOKEN_LEN];
 } Token;
-
-const char* token_type_name(TokenType type);
 
 #endif
